@@ -132,48 +132,38 @@ def invoke_chain(question):
 
 
 with st.sidebar:
-    has_api_key = check_api_key()
-
-    if not has_api_key:
+    if not st.session_state.openai_api_key:
         st.markdown(
             """
-                    OpenAI API키를 입력하세요:
-
-                    오른쪽 밑의 "Manage app"을 클릭한 후 점 세개 버튼을 클릭하세요.
-                    
-                    Settings를 클릭한 후 Secrets탭으로 이동하세요.
-
-                    여기에
-                    
-                    OPENAI_API_KEY = ""
-
-                    의 형태로 API키를 입력하세요. API키는 ""안에 넣어주세요.
-                    """
+        ### OpenAI API 키 입력
+        1. https://platform.openai.com/account/api-keys 에서 API 키를 발급받으세요.
+        2. 발급받은 API 키를 아래에 입력하세요.
+        3. API 키는 세션에만 저장되며, 브라우저를 닫으면 사라집니다.
+        """
         )
-
+        api_key = st.text_input("OpenAI API 키를 입력하세요", type="password")
+        if api_key:
+            st.session_state.openai_api_key = api_key
+            st.success("API 키가 입력되었습니다!")
+            st.rerun()
+        elif not st.session_state.get("openai_api_key"):
+            st.warning("API 키를 입력해주세요!")
     else:
-        if not st.session_state.openai_api_key:
-            try:
-                st.session_state.openai_api_key = st.secrets["OPENAI_API_KEY"]
-            except:
-                st.error(
-                    "API 키를 찾을 수 없습니다. Streamlit Cloud의 Secrets에서 설정해주세요."
-                )
-
-        llm = ChatOpenAI(
-            temperature=0.1,
-            streaming=True,
-            openai_api_key=st.session_state.openai_api_key,
-            callbacks=[
-                ChatCallbackHandler(),
-            ],
-        )
         file = st.file_uploader(
             "TXT, PDF, DOCX 파일을 업로드 하세요.",
             type=["txt", "pdf", "docx"],
         )
 
 if st.session_state.openai_api_key:
+    llm = ChatOpenAI(
+        temperature=0.1,
+        streaming=True,
+        openai_api_key=st.session_state.openai_api_key,
+        callbacks=[
+            ChatCallbackHandler(),
+        ],
+    )
+
     st.title("DocumentGPT")
 
     st.markdown(
