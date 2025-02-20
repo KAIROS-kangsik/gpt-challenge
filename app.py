@@ -11,11 +11,14 @@ from langchain.memory import ConversationBufferMemory
 from langchain.callbacks.base import BaseCallbackHandler
 import os
 import streamlit as st
+import tempfile
 
 st.set_page_config(
     page_icon="🤖",
     page_title="DocumentGPT",
 )
+
+temp_dir = tempfile.mkdtemp()
 
 if "openai_api_key" not in st.session_state:
     st.session_state["openai_api_key"] = None
@@ -47,11 +50,9 @@ class ChatCallbackHandler(BaseCallbackHandler):
 
 @st.cache_resource(show_spinner="파일 임베딩중...")
 def file_embed_and_retrieve(file):
-    os.makedirs("./.cache/files", exist_ok=True)
-    os.makedirs("./.cache/embeddings", exist_ok=True)
 
     file_content = file.read()
-    file_path = f"./.cache/files/{file.name}"
+    file_path = os.path.join(temp_dir, file.name)
     with open(file_path, "wb") as f:
         f.write(file_content)
 
@@ -60,31 +61,28 @@ def file_embed_and_retrieve(file):
         chunk_size=3500,
         chunk_overlap=500,
     )
-    loader = UnstructuredFileLoader(f"./.cache/files/{file.name}")
+    loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
     embeddings = OpenAIEmbeddings()
-    cache_dir = LocalFileStore(f"./.cache/embeddings/{file.name}")
-    cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
-        embeddings,
-        cache_dir,
+    embeddings = OpenAIEmbeddings()
+
+    # 수정된 부분: 임시 디렉토리에 벡터 저장
+    vectorstore = Chroma.from_documents(
+        docs, embeddings, persist_directory=os.path.join(temp_dir, "vectorstore")
     )
-    vectorstore = Chroma.from_documents(docs, cached_embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
     return retriever
 
 
 def check_api_key():
     try:
-        with open("./.streamlit/secrets.toml", "r") as f:
-            return "OPENAI_API_KEY" in f.read()
+        return "OPENAI_API_KEY" in st.secrets
     except FileNotFoundError:
         return False
 
 
 def get_api_key(key):
-    os.makedirs("./.streamlit", exist_ok=True)
-    with open("./.streamlit/secrets.toml", "w") as f:
-        f.write(f'OPENAI_API_KEY = "{key}"')
+    st.session_state["openai_api_key"] = key
 
 
 def save_message(message, role):
@@ -137,14 +135,30 @@ with st.sidebar:
     has_api_key = check_api_key()
 
     if not has_api_key:
-        api_key = st.text_input("Open AI API키를 입력하세요")
-        if api_key:
-            get_api_key(api_key)
-            st.session_state.openai_api_key = api_key
-            st.rerun()
+        st.markdown(
+            """
+                    OpenAI API키를 입력하세요:
+
+                    오른쪽 밑의 "Manage app"을 클릭한 후 점 세개 버튼을 클릭하세요.
+                    
+                    Settings를 클릭한 후 Secrets탭으로 이동하세요.
+
+                    여기에
+                    
+                    OPENAI_API_KEY = ""
+
+                    의 형태로 API키를 입력하세요. API키는 ""안에 넣어주세요.
+                    """
+        )
+
     else:
         if not st.session_state.openai_api_key:
-            st.session_state.openai_api_key = st.secrets["OPENAI_API_KEY"]
+            try:
+                st.session_state.openai_api_key = st.secrets["OPENAI_API_KEY"]
+            except:
+                st.error(
+                    "API 키를 찾을 수 없습니다. Streamlit Cloud의 Secrets에서 설정해주세요."
+                )
 
         llm = ChatOpenAI(
             temperature=0.1,
