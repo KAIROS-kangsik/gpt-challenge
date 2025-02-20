@@ -2,7 +2,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import FAISS
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -64,11 +64,11 @@ def file_embed_and_retrieve(file):
     loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
     embeddings = OpenAIEmbeddings()
-    embeddings = OpenAIEmbeddings()
 
     # 수정된 부분: 임시 디렉토리에 벡터 저장
-    vectorstore = Chroma.from_documents(
-        docs, embeddings, persist_directory=os.path.join(temp_dir, "vectorstore")
+    vectorstore = FAISS.from_documents(
+        docs,
+        embeddings,
     )
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
     return retriever
