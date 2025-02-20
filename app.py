@@ -47,6 +47,9 @@ class ChatCallbackHandler(BaseCallbackHandler):
 
 @st.cache_resource(show_spinner="파일 임베딩중...")
 def file_embed_and_retrieve(file):
+    os.makedirs("./.cache/files", exist_ok=True)
+    os.makedirs("./.cache/embeddings", exist_ok=True)
+
     file_content = file.read()
     file_path = f"./.cache/files/{file.name}"
     with open(file_path, "wb") as f:
