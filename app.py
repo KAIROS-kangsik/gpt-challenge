@@ -63,7 +63,7 @@ def file_embed_and_retrieve(file):
     )
     loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
-    embeddings = OpenAIEmbeddings()
+    embeddings = OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
 
     # 수정된 부분: 임시 디렉토리에 벡터 저장
     vectorstore = FAISS.from_documents(
