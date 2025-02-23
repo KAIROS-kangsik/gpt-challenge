@@ -62,43 +62,47 @@ function = {
     },
 }
 
-llm = ChatOpenAI(
-    temperature=0.1,
-).bind(
-    function_call={
-        "name": "create_quiz",
-    },
-    functions=[
-        function,
-    ],
-)
+try:
+    llm = ChatOpenAI(
+        temperature=0.1,
+        openai_api_key=st.session_state.openai_api_key,
+    ).bind(
+        function_call={
+            "name": "create_quiz",
+        },
+        functions=[
+            function,
+        ],
+    )
 
-prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-    You are a helpful assistant that is role playing as a teacher.
-         
-    Create 10 questions in KOREAN to test your knowledge of the text based ONLY on the following context.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """
+        You are a helpful assistant that is role playing as a teacher.
+            
+        Create 10 questions in KOREAN to test your knowledge of the text based ONLY on the following context.
 
-    Also creates questions by determining the difficulty based on the value assigned to "Level" below.
+        Also creates questions by determining the difficulty based on the value assigned to "Level" below.
 
-    A Level value of “Hard” will make the question very challenging, while “Easy” will make the question easy enough for anyone with common sense.
+        A Level value of “Hard” will make the question very challenging, while “Easy” will make the question easy enough for anyone with common sense.
 
-    Each question should have 4 answers, three of them must be incorrect and one should be correct.
+        Each question should have 4 answers, three of them must be incorrect and one should be correct.
 
-    Your turn!
+        Your turn!
 
-    Context: {context}
+        Context: {context}
 
-    Level: {level}
-""",
-        ),
-    ]
-)
+        Level: {level}
+    """,
+            ),
+        ]
+    )
 
-chain = prompt | llm
+    chain = prompt | llm
+except:
+    pass
 
 
 @st.cache_resource(show_spinner="파일 읽는중...")
