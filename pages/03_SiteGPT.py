@@ -36,23 +36,24 @@ class ChatCallbackHandler(BaseCallbackHandler):
         self.message_box.markdown(self.message)
 
 
-try:
-    llm = ChatOpenAI(
-        temperature=0,
-        model="gpt-4-turbo-preview",
-        openai_api_key=st.session_state.openai_api_key,
-    )
+if st.session_state.get("openai_api_key"):
+    try:
+        llm = ChatOpenAI(
+            temperature=0,
+            model="gpt-4-turbo-preview",
+            openai_api_key=st.session_state.openai_api_key,
+        )
 
-    choose_llm = ChatOpenAI(
-        temperature=0,
-        streaming=True,
-        openai_api_key=st.session_state.openai_api_key,
-        callbacks=[
-            ChatCallbackHandler(),
-        ],
-    )
-except:
-    pass
+        choose_llm = ChatOpenAI(
+            temperature=0,
+            streaming=True,
+            openai_api_key=st.session_state.openai_api_key,
+            callbacks=[
+                ChatCallbackHandler(),
+            ],
+        )
+    except:
+        pass
 
 
 give_score_prompt = ChatPromptTemplate.from_template(
