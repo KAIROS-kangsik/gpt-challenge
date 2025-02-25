@@ -207,7 +207,9 @@ def split_and_retrieve(url):
         chunk_overlap=200,
     )
     docs = loader.load_and_split(text_splitter=splitter)
-    vector_store = FAISS.from_documents(docs, OpenAIEmbeddings())
+    vector_store = FAISS.from_documents(
+        docs, OpenAIEmbeddings(openai_api_key=st.session_state.openai_api_key)
+    )
     # st.write(docs)
     return vector_store.as_retriever()
     # return docs
