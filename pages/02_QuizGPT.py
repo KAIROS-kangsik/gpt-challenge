@@ -105,7 +105,7 @@ except:
     pass
 
 
-@st.cache_resource(show_spinner="파일 읽는중...")
+# @st.cache_resource(show_spinner="파일 읽는중...")
 def file_embed_and_retrieve(file):
 
     file_content = file.read()
